@@ -1,0 +1,23 @@
+<application>
+  <component name="PyTestFrameworkService">
+    <option name="SDK_TO_PYTEST">
+      <map>
+        <entry key="C:\work\utilities\python\Anaconda3\envs\nlp\python.exe" value="false" />
+        <entry key="C:\work\utilities\python\Anaconda3\python.exe" value="true" />
+        <entry key="C:\work\utilities\python\Python38-32\python.exe" value="false" />
+      </map>
+    </option>
+    <option name="SDK_TO_NOSETEST">
+      <map>
+        <entry key="C:\work\utilities\python\Anaconda3\envs\nlp\python.exe" value="false" />
+        <entry key="C:\work\utilities\python\Python38-32\python.exe" value="false" />
+      </map>
+    </option>
+    <option name="SDK_TO_TRIALTEST">
+      <map>
+        <entry key="C:\work\utilities\python\Anaconda3\envs\nlp\python.exe" value="false" />
+        <entry key="C:\work\utilities\python\Python38-32\python.exe" value="false" />
+      </map>
+    </option>
+  </component>
+</application>
