@@ -1,0 +1,6 @@
+json2html
+flask
+obs-websocket-py
+requests
+waitress
+google-api-python-client
