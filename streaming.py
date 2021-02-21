@@ -1,15 +1,22 @@
-access_token = "EAADMZBhiQHmEBAMoxflbDpbkWrHZAGo8RXJ812ZA8Hd5A1mWvEdVsDxW7nZBKjGq8kOEswiqPCrZBsgmjbipwZCD0xLo5efyMy8diTiqwsc1vZA0bfA5XKRZBXRvYPEPOqKJp2FPNlQ9DrCZBpaSPzgf9hknBCzhpmHCfZBXy5UyZCUu0BoxDLhRxrc7sJBXNeelwAZD"
+facebook_access_token = "EAADMZBhiQHmEBAAcr8eJJVUYoMx8sZBwDFY2zA8nV8srPQP7am8AYbR5GElbHsTGpFfq6oUxP59mEzSZAZAHf4dCkvp4EWdjaJwolpiFxnwYf3DvUeluq1p0BLQFOHZCW8pmhxQqlqttGe9sNZCdrNrDV3O1noywWfaxpCoa9vnrnSOJr2RErngKi224W7IGEZD"
 
 import requests, datetime, json2html
 from obswebsocket import obsws
 from obswebsocket import requests as obs_requests
-from flask import Flask
+from flask import Flask, render_template
+import youtube_streaming as yts
+from optparse import OptionParser
+import time, datetime, pytz
+import os, random, shutil
+
 app = Flask(__name__)
 
 facebook_persistent_stream_key = "3439972949350996?s_bl=1&s_ps=1&s_psm=1&s_sw=0&s_vt=api-s&a=AbzGvRYtQHVKAwyC"
 obs_host = "ssnj-streaming.duckdns.org"
 obs_port = 4444
 obs_password = "kaur"
+SCENE_MAIN_NAME="Main"
+SCENE_PRERECORDED_NAME='Pre-recorded'
 
 def getLabelBasedOnTime():
     if(datetime.datetime.now().time().hour < 12):
@@ -19,7 +26,7 @@ def getLabelBasedOnTime():
 params = (
     ('status', 'LIVE_NOW'),
     ('title', getLabelBasedOnTime()),
-    ('access_token', access_token),
+    ('access_token', facebook_access_token),
 )
 
 def getStreamInfo():
@@ -31,19 +38,55 @@ def getStreamInfo():
     return [url, key]
 
 @app.route('/startOBSStreaming')
-def startOBS(url='', key=''):
+def startOBS(url='', key='', scene=SCENE_MAIN_NAME):
     ws = obsws(obs_host, obs_port, obs_password)
     ws.connect()
     if(url):
         ws.call(obs_requests.StopStreaming())
+        ws.call(obs_requests.SetCurrentScene(scene))
         ws.call(obs_requests.SetStreamSettings('rtmp_custom', {'bwtest': False, 'key': key, 'server': url, 'use_auth': False}, True))
     ws.call(obs_requests.StartStreaming())
     ws.disconnect()
     return getStreamingStatus()
 
-# python -c "from streaming import *; startStreaming()"
-@app.route('/startFacebookStreaming')
+@app.route('/startStreaming')
 def startStreaming():
+    ws = obsws(obs_host, obs_port, obs_password)
+    ws.connect()
+    ws.call(obs_requests.StartStreaming())
+    ws.disconnect()
+    return getStreamingStatus()
+
+@app.route('/startYoutubeStreaming')
+def startYoutubeSteaming():
+    parser = OptionParser()
+    parser.add_option("--broadcast-title", dest="broadcast_title", help="Broadcast title",
+                      default=getLabelBasedOnTime())
+    parser.add_option("--privacy-status", dest="privacy_status",
+                      help="Broadcast privacy status", default="public")
+    parser.add_option("--start-time", dest="start_time",
+                      help="Scheduled start time",
+                      default=(datetime.datetime.now(tz=pytz.utc) + datetime.timedelta(seconds=5)).isoformat())
+    # parser.add_option("--end-time", dest="end_time",
+    #  help="Scheduled end time", default='2021-03-31T00:00:00.000Z')
+    parser.add_option("--stream-title", dest="stream_title", help="Stream title",
+                      default="SSNJ: " + getLabelBasedOnTime())
+    (options, args) = parser.parse_args()
+
+    youtube = yts.get_authenticated_service()
+    broadcast_id = yts.insert_broadcast(youtube, options)
+    [stream_id, url, key] = yts.insert_stream(youtube, options)
+    print("Stream url is '%s' and key is '%s'" % (url, key))
+    yts.bind_broadcast(youtube, broadcast_id, stream_id)
+    time.sleep(10)
+    startOBS(url, key)
+    startStreaming()
+    # yts.broadcast_transition(youtube, broadcast_id, "live")
+    return getStreamingStatus()
+
+# python -c "from streaming import *; startFacebookStreaming()"
+@app.route('/startFacebookStreaming')
+def startFacebookStreaming():
     [url, key] = getStreamInfo()
     return startOBS(url, key)
 
@@ -53,6 +96,8 @@ def stopStreaming():
     ws = obsws(obs_host, obs_port, obs_password)
     ws.connect()
     ws.call(obs_requests.StopStreaming())
+    # go to the main scene when done
+    ws.call(obs_requests.SetCurrentScene(SCENE_MAIN_NAME))
     ws.disconnect()
     return getStreamingStatus()
 
@@ -77,6 +122,20 @@ def setOBSSettingsWithPersistentKey():
     ws.disconnect()
     return getStreamingStatus()
 
+### Pre-recorded sessions
+@app.route('/streamPreRecordedAsaDiWarToFacebook')
+def streamPreRecordedAsaDiWar():
+    return streamPreRecorded(folder='adw')
+
+PRE_RECORDED_BASE_FOLDER = "D:/daljeet/videos"
+SELECTED_VIDEO_FULL_FILE = "D:/daljeet/videos/selected_video.mp4"
+def streamPreRecorded(folder):
+    currentSessionSelectedFile = PRE_RECORDED_BASE_FOLDER+'/'+folder +'/'+ random.choice(os.listdir(PRE_RECORDED_BASE_FOLDER+'/'+folder))
+    shutil.copy(currentSessionSelectedFile, SELECTED_VIDEO_FULL_FILE)
+    [url, key] = getStreamInfo()
+    return startOBS(url, key, SCENE_PRERECORDED_NAME)
+
+### Web functions ###
 @app.route('/')
 def links():
     html = "OBS Commands</br>"
@@ -89,7 +148,25 @@ def links():
     html += "<b>Be careful with the commands below</b><br/>"
     html += "<a href='/startFacebookStreaming'>Start Facebook Streaming</a></br>"
     html += "<a href='/stopStreaming'>Stop Streaming</a></br>"
+
+    html += "<br/><br/><br/><br/>"
+    html += "Youtube Commands</br>"
+    html += "<b>Be careful with the commands below</b><br/>"
+    html += "<a href='/startYoutubeStreaming'>Start Youtube Streaming</a></br>"
+    html += "<a href='/stopStreaming'>Stop Streaming</a></br>"
+
+    html += "<br/><br/><br/><br/>"
+    html += "Pre-recorded Commands</br>"
+    html += "<a href='/streamPreRecordedAsaDiWarToFacebook'>Pre-recorded Asa Di War to Facebook</a></br>"
+
+    html += "<br/><br/><br/><br/>"
+    html += "<a href='/privacy'>Privacy</a></br>"
+    html += "<a href='/about'>About</a></br>"
     return html
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html', message="Privacy Policy")
 
 from waitress import serve
 def serveWeb():
@@ -101,3 +178,5 @@ if __name__ == "__main__":
     serveWeb()
     #setOBSSettingsWithPersistentKey()
     #getStreamingStatus()
+    #streamPreRecordedAsaDiWar()
+
