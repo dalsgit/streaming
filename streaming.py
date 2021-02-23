@@ -147,7 +147,7 @@ def startOBSRecording():
     ws.connect()
     retVal = str(ws.call(obs_requests.StartRecording()))
     ws.disconnect()
-    return getStreamingStatus()
+    return retVal
 
 @app.route('/stopOBSRecording')
 def stopOBSRecording():
@@ -155,7 +155,7 @@ def stopOBSRecording():
     ws.connect()
     retVal = str(ws.call(obs_requests.StopRecording()))
     ws.disconnect()
-    return getStreamingStatus()
+    return retVal
 
 ### Pre-recorded sessions
 @app.route('/streamPreRecordedAsaDiWarToFacebook')
