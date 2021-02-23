@@ -145,7 +145,8 @@ def pointToStage():
 def startOBSRecording():
     ws = obsws(obs_host, obs_port, obs_password)
     ws.connect()
-    retVal = str(ws.call(obs_requests.StartRecording()))
+    ws.call(obs_requests.StartRecording())
+    retVal = str(ws.call(obs_requests.GetRecordingStatus()))
     ws.disconnect()
     return retVal
 
@@ -153,7 +154,8 @@ def startOBSRecording():
 def stopOBSRecording():
     ws = obsws(obs_host, obs_port, obs_password)
     ws.connect()
-    retVal = str(ws.call(obs_requests.StopRecording()))
+    ws.call(obs_requests.StopRecording())
+    retVal = str(ws.call(obs_requests.GetRecordingStatus()))
     ws.disconnect()
     return retVal
 
