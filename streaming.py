@@ -8,6 +8,7 @@ import youtube_streaming as yts
 from optparse import OptionParser
 import time, datetime, pytz
 import os, random, shutil
+from ptz_visca import PTZViscaSocket
 
 app = Flask(__name__)
 
@@ -122,6 +123,40 @@ def setOBSSettingsWithPersistentKey():
     ws.disconnect()
     return getStreamingStatus()
 
+### Camera controls
+def getCamera():
+    return PTZViscaSocket('192.168.1.11')
+
+def setCameraPreset(presetNumber=1):
+    camera = getCamera()
+    camera.change_preset(presetNumber)
+    camera.close()
+    return 'done. wait for a few secs'
+
+@app.route('/pointToPodium')
+def pointToPodium():
+    return setCameraPreset(1)
+
+@app.route('/pointToStage')
+def pointToStage():
+    return setCameraPreset(2)
+
+@app.route('/startOBSRecording')
+def startOBSRecording():
+    ws = obsws(obs_host, obs_port, obs_password)
+    ws.connect()
+    retVal = str(ws.call(obs_requests.StartRecording()))
+    ws.disconnect()
+    return getStreamingStatus()
+
+@app.route('/stopOBSRecording')
+def stopOBSRecording():
+    ws = obsws(obs_host, obs_port, obs_password)
+    ws.connect()
+    retVal = str(ws.call(obs_requests.StopRecording()))
+    ws.disconnect()
+    return getStreamingStatus()
+
 ### Pre-recorded sessions
 @app.route('/streamPreRecordedAsaDiWarToFacebook')
 def streamPreRecordedAsaDiWar():
@@ -142,6 +177,9 @@ def links():
     html += "<a href='/obs'>OBS Info</a></br>"
     html += "<a href='/setOBSSettingsWithPersistentKey'>Set OBS persistent key</a></br>"
     html += "<a href='/startOBSStreaming'>Start OBS streaming (settings are not changed)</a></br>"
+    html += "<a href='/pointToPodium'>Camera to Tabya (Podium)</a></br>"
+    html += "<a href='/pointToStage'>Camera to stage</a></br>"
+
 
     html += "<br/><br/><br/><br/>"
     html += "Facebook Commands</br>"
