@@ -179,6 +179,8 @@ def links():
     html += "<a href='/startOBSStreaming'>Start OBS streaming (settings are not changed)</a></br>"
     html += "<a href='/pointToPodium'>Camera to Tabya (Podium)</a></br>"
     html += "<a href='/pointToStage'>Camera to stage</a></br>"
+    html += "<a href='/startOBSRecording'>Start Recording</a></br>"
+    html += "<a href='/stopOBSRecording'>STOP Recording</a></br>"
 
 
     html += "<br/><br/><br/><br/>"
