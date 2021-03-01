@@ -1,24 +1,27 @@
 #!/usr/bin/python
-api_key="AIzaSyC2maF-9v1KW2Z9KMd9CX3Rj1NhqXpdOYM"
 from apiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
-import json
+import json, configparser, os
 
-refresh_token = "1//0dSH4X8ZeWH7QCgYIARAAGA0SNwF-L9Iratt9Gw7Exl9nvS82VlO2_Q_vA2AmGqoEJlkI54tt99T56egGENpN-oB6pVp80grMQS8"
-CLIENT_SECRET_FILE = 'google_client_secret.json'
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+api_key=config['youtube']['api_key']
+refresh_token=config['youtube']['refresh_token']
+client_secret=config['youtube']['client_secret']
+
 SCOPES = ['https://www.googleapis.com/auth/youtube']
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
 # store this value if the refresh token has expired
 def get_refresh_token():
-    flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+    #flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+    flow = InstalledAppFlow.from_client_secrets(client_secret, SCOPES)
     credentials = flow.run_console()
 
 def get_authenticated_service():
-    cs = json.load(open(CLIENT_SECRET_FILE))['installed']
-    print()  #
+    cs = json.loads(client_secret)['installed']
     credentials = Credentials(
         None,
         refresh_token=refresh_token,

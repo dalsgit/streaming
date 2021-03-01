@@ -1,6 +1,4 @@
-facebook_access_token = "EAADMZBhiQHmEBAAcr8eJJVUYoMx8sZBwDFY2zA8nV8srPQP7am8AYbR5GElbHsTGpFfq6oUxP59mEzSZAZAHf4dCkvp4EWdjaJwolpiFxnwYf3DvUeluq1p0BLQFOHZCW8pmhxQqlqttGe9sNZCdrNrDV3O1noywWfaxpCoa9vnrnSOJr2RErngKi224W7IGEZD"
-
-import requests, datetime, json2html
+import requests, datetime, json2html, configparser
 from obswebsocket import obsws
 from obswebsocket import requests as obs_requests
 from flask import Flask, render_template
@@ -12,10 +10,15 @@ from ptz_visca import PTZViscaSocket
 
 app = Flask(__name__)
 
-facebook_persistent_stream_key = "3439972949350996?s_bl=1&s_ps=1&s_psm=1&s_sw=0&s_vt=api-s&a=AbzGvRYtQHVKAwyC"
-obs_host = "ssnj-streaming.duckdns.org"
-obs_port = 4444
-obs_password = "kaur"
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+facebook_access_token = config['facebook']['access_token']
+facebook_persistent_stream_key = config['facebook']['persistent_stream_key']
+
+obs_host = config['obs']['host']
+obs_port = config['obs']['port']
+obs_password = config['obs']['password']
+
 SCENE_MAIN_NAME="Main"
 SCENE_PRERECORDED_NAME='Pre-recorded'
 
