@@ -193,7 +193,7 @@ def video():
 
 ### Camera
 import cv2
-camera = cv2.VideoCapture("rtsp://ssnj-streaming.duckdns.org:554")
+camera = cv2.VideoCapture("rtsp://192.168.1.11:554")
 
 @app.route('/video_feed')
 def video_feed():
