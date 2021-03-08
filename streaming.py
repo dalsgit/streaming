@@ -1,14 +1,16 @@
 import requests, datetime, json2html, configparser
 from obswebsocket import obsws
 from obswebsocket import requests as obs_requests
-from flask import Flask, render_template
+from flask import Flask, render_template, Response
 import youtube_streaming as yts
 from optparse import OptionParser
 import time, datetime, pytz
 import os, random, shutil
 from ptz_visca import PTZViscaSocket
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
@@ -177,45 +179,41 @@ def streamPreRecorded(folder):
 
 ### Web functions ###
 @app.route('/')
-def links():
-    html = "OBS Commands</br>"
-    html += "<a href='/obs'>OBS Info</a></br>"
-    html += "<a href='/setOBSSettingsWithPersistentKey'>Set OBS persistent key</a></br>"
-    html += "<a href='/startOBSStreaming'>Start OBS streaming (settings are not changed)</a></br>"
-    html += "<a href='/pointToPodium'>Camera to Tabya (Podium)</a></br>"
-    html += "<a href='/pointToStage'>Camera to stage</a></br>"
-    html += "<a href='/startOBSRecording'>Start Recording</a></br>"
-    html += "<a href='/stopOBSRecording'>STOP Recording</a></br>"
-
-
-    html += "<br/><br/><br/><br/>"
-    html += "Facebook Commands</br>"
-    html += "<b>Be careful with the commands below</b><br/>"
-    html += "<a href='/startFacebookStreaming'>Start Facebook Streaming</a></br>"
-    html += "<a href='/stopStreaming'>Stop Streaming</a></br>"
-
-    html += "<br/><br/><br/><br/>"
-    html += "Youtube Commands</br>"
-    html += "<b>Be careful with the commands below</b><br/>"
-    html += "<a href='/startYoutubeStreaming'>Start Youtube Streaming</a></br>"
-    html += "<a href='/stopStreaming'>Stop Streaming</a></br>"
-
-    html += "<br/><br/><br/><br/>"
-    html += "Pre-recorded Commands</br>"
-    html += "<a href='/streamPreRecordedAsaDiWarToFacebook'>Pre-recorded Asa Di War to Facebook</a></br>"
-
-    html += "<br/><br/><br/><br/>"
-    html += "<a href='/privacy'>Privacy</a></br>"
-    html += "<a href='/about'>About</a></br>"
-    return html
+def index():
+    """Video streaming home page."""
+    return render_template('index.html')
 
 @app.route('/privacy')
 def privacy():
     return render_template('privacy.html', message="Privacy Policy")
 
+@app.route('/video')
+def video():
+    return render_template('video.html', message="RTSP")
+
+### Camera
+import cv2
+camera = cv2.VideoCapture("rtsp://ssnj-streaming.duckdns.org:554")
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+def gen_frames():
+    while True:
+        success, frame = camera.read()  # read the camera frame
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
+
 from waitress import serve
 def serveWeb():
-    serve(app, host='0.0.0.0', port=8000, threads=1)  # WAITRESS!
+    serve(app, host='0.0.0.0', port=8000, threads=1, url_scheme='https')  # WAITRESS!
+    #app.run(host='ssnj-streaming-duckdns.org', debug=False, ssl_context='adhoc')
 
 if __name__ == "__main__":
     #startStreaming()
