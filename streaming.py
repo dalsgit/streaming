@@ -212,7 +212,7 @@ def gen_frames():
 
 from waitress import serve
 def serveWeb():
-    serve(app, host='0.0.0.0', port=8000, threads=1, url_scheme='https')  # WAITRESS!
+    serve(app, host='0.0.0.0', port=8000, threads=10, url_scheme='https')  # WAITRESS!
     #app.run(host='ssnj-streaming-duckdns.org', debug=False, ssl_context='adhoc')
 
 if __name__ == "__main__":
