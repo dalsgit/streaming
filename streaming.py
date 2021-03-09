@@ -193,7 +193,7 @@ def video():
 
 ### Camera
 import cv2
-camera = cv2.VideoCapture("rtsp://192.168.1.11:554")
+camera = cv2.VideoCapture("rtsp://192.168.1.11:554/1")
 
 @app.route('/video_feed')
 def video_feed():
@@ -212,8 +212,8 @@ def gen_frames():
 
 from waitress import serve
 def serveWeb():
-    serve(app, host='0.0.0.0', port=8000, threads=10, url_scheme='https')  # WAITRESS!
-    #app.run(host='ssnj-streaming-duckdns.org', debug=False, ssl_context='adhoc')
+    serve(app, host='0.0.0.0', port=8000, threads=10)  # WAITRESS!
+    #app.run(host='0.0.0.0', port=8000, debug=True) #, ssl_context='adhoc')
 
 if __name__ == "__main__":
     #startStreaming()
