@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 /config.ini
 .idea
+suit.properties
+.vscode
