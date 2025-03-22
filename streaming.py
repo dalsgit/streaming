@@ -2,13 +2,13 @@ import requests, datetime, json2html, configparser
 from obswebsocket import obsws
 from obswebsocket import requests as obs_requests
 from flask import Flask, render_template, Response
-import youtube_streaming as yts
+#import youtube_streaming as yts
 from optparse import OptionParser
 import time, datetime, pytz
 import os, random, shutil
 from ptz_visca import PTZViscaSocket
 from flask_cors import CORS
-
+import obsws_python as obs_new
 app = Flask(__name__)
 CORS(app)
 
@@ -45,14 +45,20 @@ def getStreamInfo():
 
 @app.route('/startOBSStreaming')
 def startOBS(url='', key='', scene=SCENE_MAIN_NAME):
-    ws = obsws(obs_host, obs_port, obs_password)
-    ws.connect()
+    ws = obs_new.ReqClient(host=obs_host, port=obs_port, password=obs_password)
     if(url):
-        ws.call(obs_requests.StopStreaming())
-        ws.call(obs_requests.SetCurrentScene(scene))
-        ws.call(obs_requests.SetStreamSettings('rtmp_custom', {'bwtest': False, 'key': key, 'server': url, 'use_auth': False}, True))
-    ws.call(obs_requests.StartStreaming())
-    ws.disconnect()
+        ws.set_current_program_scene(scene)
+        print(f"url: {url}")
+        print(f"key: {key}")
+        settings = {
+            "server": url,
+            "key": key,
+        }
+        ws.set_stream_service_settings(
+            "rtmp_custom",
+            settings,
+        )
+    ws.start_stream()
     return getStreamingStatus()
 
 @app.route('/startStreaming')
@@ -99,12 +105,9 @@ def startFacebookStreaming():
 # python -c "from streaming import *; stopStreaming()"
 @app.route('/stopStreaming')
 def stopStreaming():
-    ws = obsws(obs_host, obs_port, obs_password)
-    ws.connect()
-    ws.call(obs_requests.StopStreaming())
-    # go to the main scene when done
-    ws.call(obs_requests.SetCurrentScene(SCENE_MAIN_NAME))
-    ws.disconnect()
+    ws = obs_new.ReqClient(host=obs_host, port=obs_port, password=obs_password)
+    ws.stop_stream()
+    ws.set_current_program_scene(SCENE_MAIN_NAME)
     return getStreamingStatus()
 
 @app.route('/obs')
@@ -218,8 +221,9 @@ def serveWeb():
 if __name__ == "__main__":
     #startStreaming()
     #getStreamingStatus()
-    serveWeb()
+    #serveWeb()
     #setOBSSettingsWithPersistentKey()
-    #getStreamingStatus()
+    startFacebookStreaming()
+    getStreamingStatus()
     #streamPreRecordedAsaDiWar()
 
