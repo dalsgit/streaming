@@ -221,9 +221,9 @@ def serveWeb():
 if __name__ == "__main__":
     #startStreaming()
     #getStreamingStatus()
-    #serveWeb()
+    serveWeb()
     #setOBSSettingsWithPersistentKey()
-    startFacebookStreaming()
+    #startFacebookStreaming()
     getStreamingStatus()
     #streamPreRecordedAsaDiWar()
 
